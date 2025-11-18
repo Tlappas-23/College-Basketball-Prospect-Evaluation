@@ -61,7 +61,7 @@ def style_rows(df):
 st.markdown(
     """
     <h1 style="font-size:38px; font-weight:700; margin-bottom:0;">
-        College Prospect Dashboard — Final 7-Feature Model
+        College Prospect Dashboard: 7-Feature Model
     </h1>
 
     <p style="font-size:16px; color:#444; max-width:900px; line-height:1.55;">
