@@ -1,209 +1,131 @@
-NCAA to NBA Stick Probability Modeling Pipeline and Dashboard
-1. Project Overview
+# NCAA to NBA Stick Probability Modeling Pipeline and Dashboard
+
+## 1. Project Overview
+
+This project develops a reproducible machine learning pipeline that estimates the probability that an NCAA player will “stick” in the NBA. A player is defined as having "stuck" if they achieve a Combined Metric of 5 or higher and average at least 15 minutes per game in two or more NBA seasons.
+
+All model inputs come strictly from NCAA production and player attributes.  
+No draft information or NBA performance data is used as a predictive feature.
 
-This project builds a fully reproducible machine learning system that estimates the probability that an NCAA basketball player will “stick” in the NBA.
-A player is considered to have “stuck” if they remain rostered for multiple seasons and meet a minimum playing time threshold.
+The final system includes the following components:
 
-The workflow uses:
+1. Clean and standardized data assembly  
+2. Strict temporal train/test split (train ≤ 2022, test ≥ 2023)  
+3. Median imputation applied before SMOTE  
+4. SMOTE oversampling to correct class imbalance  
+5. XGBoost classifier tuned for recall stability  
+6. Selection of the seven strongest predictive features  
+7. Deployment in an interactive Dash dashboard
 
-A strict pre-2023 temporal split
+---
 
-Median imputation
+## 2. The Final Seven Feature Model
 
-SMOTE oversampling
+The final predictive model uses the following seven features:
 
-A tuned XGBoost classifier
+1. FTA_per40  
+2. FT_per40  
+3. NBA_Ready_Score_100  
+4. Def_Impact  
+5. BLK_percent  
+6. Box_Production_peak  
+7. PER_peak  
 
-A final seven-feature model
+The feature **NBA_Ready_Score_100** is a composite index derived from weighted components:
 
-An interactive Dash dashboard
+- Two_Way_Impact_peak (0.80)  
+- BPM_peak (0.70)  
+- Class Numeric (–0.65)  
+- Conf_Strength (0.60)  
+- BPM_improvement (–0.54)  
+- TOV_per40 (0.49)  
+- WS40_peak (–0.48)
 
-All predictions are based entirely on NCAA production.
-No draft position or NBA outcomes are used as model inputs.
+No draft position or round is incorporated at any stage.
 
-2. Modeling Workflow
-2.1 Step 1 — Imports and Global Configuration
+---
 
-This step establishes the modeling environment by:
+## 3. Stick Metric Definition
 
-Organizing imports into logical groups
+The "Stick" Metric is a pace- and usage-adjusted impact formula that applies the following per-event weights:
 
-Setting a global random state for reproducibility
+- FGM: 1.5  
+- FGA: 1  
+- 3PM: 0.4  
+- FTM: 0.4  
+- AST: 1.15  
+- TOV: –1.9  
+- OREB: 2.2  
+- DREB: 2.2  
+- STL: 3  
+- BLK: 10  
+- PF: –0.4  
+- Missed FG: –0.9  
+- Missed 3PA: –1  
+- Missed FT: –0.4  
+- Double-double: +3  
+- Triple-double: +10  
+- Plus/minus: +0.22  
 
-Applying consistent plot styling
+The result is normalized by games played and adjusted to per-36-minute pace.
 
-Outcome: A stable, reproducible environment for the entire project.
+NBA players typically score around **5** on this metric.  
+To count as “sticking,” a player must achieve:
 
-2.2 Step 2 — Data Preparation and Leakage Prevention
+1. Combined Metric ≥ 5  
+2. At least two NBA seasons with ≥ 15 MPG  
 
-Key actions:
+---
 
-Convert season text to a numeric Season_Year
+## 4. Model Training Pipeline
 
-Split data temporally (train ≤ 2022, test ≥ 2023)
+The training pipeline includes:
 
-Remove all columns that would not be known at draft time, including:
+1. Median imputation (applied before resampling)  
+2. SMOTE with sampling_strategy = 0.10 and k_neighbors = 3  
+3. XGBoost classifier with:  
+   - n_estimators = 600  
+   - max_depth = 4  
+   - learning_rate = 0.025  
+   - subsample = 0.90  
+   - colsample_bytree = 0.70  
+   - tree_method = “hist”  
 
-Player name
+4. Threshold selection using the optimal F1 point on the precision–recall curve  
+5. Evaluation using:  
+   - AUC-ROC  
+   - PR-AUC  
+   - Precision  
+   - Recall  
+   - F1 score  
+   - Balanced accuracy  
+   - Confusion matrix  
 
-Team
+---
 
-Season
+## 5. Dashboard Summary
 
-NBA statistics such as minutes, plus-minus, stick outcomes
+The dashboard displays:
 
-Restrict inputs to numeric NCAA features only
+- Season  
+- Player  
+- Team  
+- NBA_YOS (NBA years played)  
+- Predicted probability of sticking (using the final 7-feature model)  
 
-Outcome: A dataset aligned with real draft-time prediction conditions.
+Features:
 
-2.3 Step 3 — Missing Value Imputation
+- Color-coded probability tiers  
+- Season filter  
+- Adjustable Top-N ranking  
+- Excludes incomplete or future seasons (e.g., 2024)  
 
-Median imputation is applied to the training data
+The dashboard is designed for scouting, historical analysis, and identifying overperforming NCAA profiles that may translate into NBA longevity.
 
-Imputation is performed before SMOTE
+---
 
-Ensures synthetic samples created by SMOTE do not contain NaNs
+## 6. Usage Notes
 
-2.4 Step 4 — Resampling with SMOTE
-
-Class imbalance is handled using SMOTE
-
-Sampling strategy is set to 0.10
-
-k_neighbors=3 ensures stable behavior on sparse minority cases
-
-2.5 Step 5 — Final Seven-Feature XGBoost Model
-
-After evaluating more than 35 possible predictors, the final model uses:
-
-FTA_per40
-
-FT_per40
-
-NBA_Ready_Score_100
-
-Def_Impact
-
-BLK_percent
-
-Box_Production_peak
-
-PER_peak
-
-These features consistently delivered the best out-of-time performance.
-
-2.6 Step 6 — NBA Readiness Meta-Metric
-
-NBA_Ready_Score_100 is a composite feature built from seven weighted components:
-
-Two_Way_Impact_peak (weight 0.80)
-
-BPM_peak (0.70)
-
-Class Numeric (–0.65)
-
-Conf_Strength (0.60)
-
-BPM_improvement (–0.54)
-
-TOV_per40 (0.49)
-
-WS40_peak (–0.48)
-
-This metric serves as a high-level indicator of pro readiness.
-
-2.7 Step 7 — Definition of "Stick" Ground Truth
-
-A player is labeled as having “stuck” if all of the following are true:
-
-A Combined Metric of at least 5
-
-At least two NBA seasons played
-
-At least 15 minutes per game on average across those seasons
-
-The Combined Metric includes weighted components for:
-
-Scoring
-
-Efficiency
-
-Creation
-
-Defensive impact
-
-Penalties for turnovers and fouls
-
-Bonuses for double-doubles, triple-doubles, and plus-minus
-
-Pace and per-minute normalization
-
-2.8 Step 8 — Threshold Optimization
-
-The classification threshold is determined by maximizing the F1-score:
-
-Compute precision-recall curve
-
-Compute F1-score at each threshold
-
-Select the threshold corresponding to maximum F1
-
-Use this threshold for final classification
-
-This improves recall and precision on rare events.
-
-3. Interactive Dashboard
-
-An interactive Dash application is included for exploring model outputs.
-
-3.1 Displayed Fields
-
-Season_Year
-
-Player
-
-Team
-
-NBA_YOS (actual years of NBA service for historical players)
-
-Predicted probability of sticking
-
-3.2 Dashboard Features
-
-Season filter
-
-Top-N selector
-
-Automatic sorting by predicted probability
-
-Color-coded probability classes (high, mid, low)
-
-Clean and modern UI using standardized styling
-
-3.3 Structure
-
-The dashboard file includes:
-
-Data loading and preprocessing
-
-Styling and layout
-
-Callback logic for dynamic table updates
-
-Main execution block
-
-4. Summary
-
-This project provides:
-
-A rigorously leak-free modeling pipeline
-
-A tuned seven-feature XGBoost model
-
-A composite NBA readiness index
-
-A validated stick metric based on real NBA outcomes
-
-A production-ready dashboard for exploring probabilities
-
-A model card, diagrams, or a GitHub-friendly layout can be produced upon request.
+- The dashboard does not represent draft rankings; probabilities are independent of draft data.  
+- All NCAA seasons up to 2023 are eligible for prediction.  
+- The model is optimized for generalization on out-of-time seasons and should not be retrained with future seasons included unless the entire temporal split is restructured.
