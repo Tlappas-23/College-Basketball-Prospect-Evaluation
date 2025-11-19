@@ -61,34 +61,54 @@ def style_rows(df):
 st.markdown(
     """
     <h1 style="font-size:38px; font-weight:700; margin-bottom:0;">
-        College Prospect Dashboard: 7-Feature Model
+        College Prospect Dashboard — Final XGBoost Model (10 Features)
     </h1>
 
     <p style="font-size:16px; color:#444; max-width:900px; line-height:1.55;">
         This dashboard visualizes the final probability model that predicts whether 
         an NCAA player is likely to <strong>stick</strong> in the NBA based solely on collegiate production.
-        The model uses median-imputed missing values, a strict pre-2023 temporal split,
-        SMOTE balancing, and an optimized XGBoost classifier.
+        The model uses median-imputed missing values, a strict pre-2023 temporal split to prevent leakage,
+        SMOTE balancing on the training data only, and an optimized XGBoost classifier.
     </p>
 
     <p style="font-size:16px; color:#444; max-width:900px; line-height:1.55;">
         <strong>These probabilities do not represent draft rankings.</strong>
-        They estimate the likelihood a college player will stick in the NBA.
+        They estimate the likelihood a college player will stick in the NBA 
+        (play 2+ NBA seasons averaging at least 15 MPG with a Combined Metric ≥ 5).
     </p>
 
-    <h3 style="margin-top:35px;">Final Model Inputs (7 Features)</h3>
+    <h3 style="margin-top:35px;">Final Model Inputs (10 Features)</h3>
     <ul style="font-size:16px; color:#333; line-height:1.65;">
-        <li>FTA_per40</li>
-        <li>FT_per40</li>
-        <li>NBA_Ready_Score_100</li>
-        <li>Def_Impact</li>
-        <li>BLK_percent</li>
         <li>Box_Production_peak</li>
-        <li>PER_peak</li>
+        <li>FTA_per40</li>
+        <li>Def_Impact</li>
+        <li>NBA_Ready_Score</li>
+        <li>FG_per40</li>
+        <li>PER</li>
+        <li>BLK_per40</li>
+        <li>TOV_percent</li>
+        <li>WS40</li>
+        <li>FT_percent</li>
     </ul>
 
-    <p style="font-size:15px; color:#555; max-width:900px;">
-        Additional context variable included: <strong>NBA_YOS</strong> (NBA years played)
+    <h3 style="margin-top:30px;">Inside the NBA_Ready_Score</h3>
+    <p style="font-size:15px; color:#555; max-width:900px; line-height:1.55;">
+        NBA_Ready_Score combines seven high-signal developmental indicators:
+        <br><br>
+        • Two_Way_Impact_peak (0.80) <br>
+        • BPM_peak (0.70) <br>
+        • Class Numeric (–0.65) <br>
+        • Conf_Strength (0.60) <br>
+        • BPM_improvement (–0.54) <br>
+        • TOV_per40 (0.49) <br>
+        • WS40_peak (–0.48) <br><br>
+
+        All scaling is standardized within-season to preserve temporal integrity.
+        No NBA or draft information is included during training.
+    </p>
+
+    <p style="font-size:14px; color:#444; margin-top:20px;">
+        Additional context variable shown in the table: <strong>NBA_YOS</strong> (NBA seasons played).
     </p>
     """,
     unsafe_allow_html=True
