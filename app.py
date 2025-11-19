@@ -14,7 +14,7 @@ st.set_page_config(
 # LOAD DATA
 # =============================================================================
 
-CSV_URL = "https://raw.githubusercontent.com/Tlappas-23/College-Basketball-Prospect-Evaluation/main/Top_30_Per_Season_BEST_MODEL.csv"
+CSV_URL = "https://raw.githubusercontent.com/Tlappas-23/College-Basketball-Prospect-Evaluation/main/Top_30_Per_Season_BEST_MODEL_v4.csv"
 
 @st.cache_data
 def load_data():
