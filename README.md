@@ -1,53 +1,69 @@
-# NCAA to NBA Stick Probability Modeling Pipeline and Dashboard
+# NCAA → NBA Stick Probability Model (2025)
 
-## 1. Project Overview
+This project develops a reproducible machine learning pipeline that estimates the probability an NCAA player will **stick** in the NBA.  
+A player is considered to have “stuck” if they:
 
-This project develops a reproducible machine learning pipeline that estimates the probability that an NCAA player will “stick” in the NBA. A player is defined as having "stuck" if they achieve a Combined Metric of 5 or higher and average at least 15 minutes per game in two or more NBA seasons.
+- Achieve a **Combined Metric ≥ 5**, and  
+- Play **2+ NBA seasons** averaging **15+ MPG**
 
-All model inputs come strictly from NCAA production and player attributes.  
-No draft information or NBA performance data is used as a predictive feature.
-
-The final system includes the following components:
-
-1. Clean and standardized data assembly  
-2. Strict temporal train/test split (train ≤ 2022, test ≥ 2023)  
-3. Median imputation applied before SMOTE  
-4. SMOTE oversampling to correct class imbalance  
-5. XGBoost classifier tuned for recall stability  
-6. Selection of the seven strongest predictive features  
-7. Deployment in an interactive Dash dashboard
+All predictive inputs come strictly from **NCAA statistics and attributes**.  
+No draft position, NBA performance, team context, or post-college information is used as a feature.
 
 ---
 
-## 2. The Final Seven Feature Model
+## 1. Project Overview
 
-The final predictive model uses the following seven features:
+The full pipeline includes:
 
-1. FTA_per40  
-2. FT_per40  
-3. NBA_Ready_Score_100  
-4. Def_Impact  
-5. BLK_percent  
-6. Box_Production_peak  
-7. PER_peak  
+- Clean and standardized NCAA player data  
+- Strict **temporal split** (Train ≤ 2022, Test 2023–2025)  
+- Median imputation  
+- SMOTE oversampling (training only)  
+- Tuned XGBoost classifier  
+- Feature selection using LASSO  
+- Deployment via an interactive dashboard (Streamlit)
 
-The feature **NBA_Ready_Score_100** is a composite index derived from weighted components:
+The goal is to identify college profiles that historically translate to long-term NBA rotation value.
 
-- Two_Way_Impact_peak (0.80)  
-- BPM_peak (0.70)  
-- Class Numeric (–0.65)  
-- Conf_Strength (0.60)  
-- BPM_improvement (–0.54)  
-- TOV_per40 (0.49)  
-- WS40_peak (–0.48)
+---
 
-No draft position or round is incorporated at any stage.
+## 2. Final Feature Set (13 Features)
+
+The final production model uses the following features:
+
+- FTA_per40  
+- FT_per40  
+- Def_Impact  
+- BLK_percent  
+- Box_Production_peak  
+- PER_peak  
+- DRB_percent  
+- PER_improvement  
+- FG_per40  
+- NBA_Ready_Score_v2_100  
+- 2P_per40  
+- WS  
+- FT_rate  
+
+### NBA_Ready_Score_v2_100 Components
+
+A weighted developmental composite built from:
+
+- Two_Way_Impact_peak  
+- BPM_peak  
+- Class Numeric  
+- Conf_Strength  
+- BPM_improvement  
+- TOV_per40  
+- WS40_peak  
+
+All weights are derived from LASSO coefficient magnitudes.
 
 ---
 
 ## 3. Stick Metric Definition
 
-The "Stick" Metric is a pace- and usage-adjusted impact formula that applies the following per-event weights:
+The model is trained on a custom **NBA Stick Metric**, with per-event weights:
 
 - FGM: 1.5  
 - FGA: 1  
@@ -67,65 +83,65 @@ The "Stick" Metric is a pace- and usage-adjusted impact formula that applies the
 - Triple-double: +10  
 - Plus/minus: +0.22  
 
-The result is normalized by games played and adjusted to per-36-minute pace.
+The metric is normalized per game and adjusted to per-36 pace.
 
-NBA players typically score around **5** on this metric.  
-To count as “sticking,” a player must achieve:
+A player is labeled as **Stuck = 1** if:
 
 1. Combined Metric ≥ 5  
-2. At least two NBA seasons with ≥ 15 MPG  
+2. ≥ 2 NBA seasons with ≥ 15 MPG  
 
 ---
 
 ## 4. Model Training Pipeline
 
-The training pipeline includes:
+Key modeling steps:
 
-1. Median imputation (applied before resampling)  
-2. SMOTE with sampling_strategy = 0.10 and k_neighbors = 3  
-3. XGBoost classifier with:  
-   - n_estimators = 600  
+1. Median imputation  
+2. SMOTE (sampling_strategy = 0.10)  
+3. XGBoost classifier:
+   - n_estimators = 650  
    - max_depth = 4  
    - learning_rate = 0.025  
    - subsample = 0.90  
    - colsample_bytree = 0.70  
-   - tree_method = “hist”  
-
-4. Threshold selection using the optimal F1 point on the precision–recall curve  
-5. Evaluation using:  
+4. Optimal threshold from the F1-maximizing point on the PR curve  
+5. Evaluation on 2023–2025 holdout:
    - AUC-ROC  
    - PR-AUC  
-   - Precision  
-   - Recall  
-   - F1 score  
-   - Balanced accuracy  
+   - Precision/Recall/F1  
    - Confusion matrix  
+
+This produces a calibrated, temporally stable probability of sticking.
 
 ---
 
 ## 5. Dashboard Summary
 
-The dashboard displays:
+The Streamlit dashboard displays:
 
 - Season  
 - Player  
 - Team  
-- NBA_YOS (NBA years played)  
-- Predicted probability of sticking (using the final 7-feature model)  
+- NBA_YOS  
+- Predicted NBA stick probability  
 
 Features:
 
-- Color-coded probability tiers  
 - Season filter  
-- Adjustable Top-N ranking  
-- Excludes incomplete or future seasons (e.g., 2024)  
+- Top-N filter (10–50)  
+- Smooth-color probability gradient  
+- Supports all seasons ≤ 2023  
 
-The dashboard is designed for scouting, historical analysis, and identifying overperforming NCAA profiles that may translate into NBA longevity.
+The dashboard is designed for scouting, analytics, historical comparison, and identifying undervalued NCAA archetypes.
 
 ---
 
-## 6. Usage Notes
+## 6. Notes
 
-- The dashboard does not represent draft rankings; probabilities are independent of draft data.  
-- All NCAA seasons up to 2023 are eligible for prediction.  
-- The model is optimized for generalization on out-of-time seasons and should not be retrained with future seasons included unless the entire temporal split is restructured.
+- These are **not** draft rankings.  
+- Probabilities are based on NCAA production only.  
+- The model is optimized for **out-of-time validation**.  
+- Future seasons should only be added with a preserved temporal split.
+
+---
+
