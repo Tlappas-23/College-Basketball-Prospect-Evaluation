@@ -65,7 +65,7 @@ st.markdown(
             Interactive visualization of the final NCAA-to-NBA stick probability model.
             Scores reflect model-derived probabilities that a player will 
             <strong>“stick” in the NBA</strong> based solely on NCAA production.
-            Results displayed here represent the <top probability players per season</strong>,
+            Results displayed here represent the top probability players per season,
             produced by a 13-feature XGBoost model with strict temporal validation.
         </p>
     </div>
