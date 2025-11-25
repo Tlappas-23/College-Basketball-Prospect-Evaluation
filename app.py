@@ -14,7 +14,7 @@ st.set_page_config(
 # ======================================================
 CSV_URL = (
     "https://raw.githubusercontent.com/Tlappas-23/College-Basketball-Prospect-Evaluation/main/"
-    "FINAL_2025_College_to_NBA_Top50_Per_Season.csv"
+    "FINAL_2025_College_to_NBA_Top100_Per_Season.csv"
 )
 
 @st.cache_data
